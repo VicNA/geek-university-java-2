@@ -8,46 +8,54 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.net.Socket;
+import java.util.LinkedList;
+import java.util.List;
 
 public class ClientController {
+
+    private final int LAST_LINES = 100;
 
     @FXML
     public VBox clientsBox;
     @FXML
     public Label currentUser;
     @FXML
+    public PasswordField userPasswordField;
+    @FXML
     private ListView<String> clientsListView;
     @FXML
     private TextArea chatArea;
     @FXML
-    private TextField messageField, userNameField;
+    private TextField messageField;
     @FXML
-    private HBox authPanel, msgPanel;
+    private TextField loginField;
+    @FXML
+    private HBox authPanel;
+    @FXML
+    private HBox msgPanel;
 
     private Socket socket;
     private DataInputStream in;
     private DataOutputStream out;
 
-//  Кнопка авторизации
+    //  Кнопка авторизации
     public void connect(ActionEvent actionEvent) {
-        openConnect();
-        new Thread(() -> createThreadChat()).start();
+        if (socket == null || socket.isClosed()) {
+            openConnect();
+            new Thread(() -> createThreadChat()).start();
+        }
+
         try {
-            out.writeUTF("/auth " + userNameField.getText());
+            out.writeUTF("/auth " + loginField.getText() + " " + userPasswordField.getText());
         } catch (IOException e) {
             showError("Невозможно отправить запрос авторизации на сервер");
         }
     }
 
-//  Создание/открытие подключения к серверу
+    //  Создание/открытие подключения к серверу
     public void openConnect() {
-        if (socket != null && !socket.isClosed()) {
-            return;
-        }
         try {
             socket = new Socket("localhost", 8189);
             in = new DataInputStream(socket.getInputStream());
@@ -57,7 +65,7 @@ public class ClientController {
         }
     }
 
-//  Отдельный поток основной логики работы
+    //  Отдельный поток основной логики работы
     private void createThreadChat() {
         try {
             tryToAuth();
@@ -70,7 +78,7 @@ public class ClientController {
         }
     }
 
-//  Скрытие/разскрытие панелей графического клиента при авторизации
+    //  Скрытие/разскрытие панелей графического клиента при авторизации
     public void setAuthorized(boolean authorized) {
         msgPanel.setVisible(authorized);
         msgPanel.setManaged(authorized);
@@ -80,49 +88,79 @@ public class ClientController {
         clientsBox.setManaged(authorized);
     }
 
-//  Обработка входящих ответов сервера на попытки авторизации
+    //  Обработка входящих ответов сервера на попытки авторизации
     private void tryToAuth() throws IOException {
-        while (true) {
-            String inputMessage = in.readUTF();
-            if (inputMessage.equals("/exit")) {
-                closeConnection();
+        File file = new File(loginField.getText() + ".txt");
+        if (!file.exists()) file.createNewFile();
+
+        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+            while (true) {
+                String inputMessage = in.readUTF();
+                if (inputMessage.equals("/exit")) {
+                    closeConnection();
+                }
+                if (inputMessage.startsWith("/authok ")) {
+//                System.out.println("inputMessage: /authok");
+                    setAuthorized(true);
+                    String connectedUser = "Ваше имя: " + inputMessage.split("\\s+")[1];
+                    Platform.runLater(() -> currentUser.setText(connectedUser));
+
+                    List<String> history = new LinkedList<>();
+                    while (reader.ready()) {
+                        history.add(reader.readLine());
+                        if (history.size() > LAST_LINES) {
+                            history.remove(0);
+                        }
+                    }
+                    for (String s : history) {
+                        chatArea.appendText(s + "\n");
+                    }
+                    break;
+                }
+                chatArea.appendText(inputMessage + "\n");
             }
-            if (inputMessage.startsWith("/authok ")) {
-                setAuthorized(true);
-                String connectedUser = "Ваше имя: " + inputMessage.split("\\s+")[1];
-                Platform.runLater(() -> currentUser.setText(connectedUser));
-                break;
-            }
-            chatArea.appendText(inputMessage + "\n");
         }
     }
 
 //  Обработка входящих ответов сервера на посылаемые пользователем сообщения в чате
 //  и отображение этих сообщений в графическом клиенте
     private void runChat() throws IOException {
-        while (true) {
-            String inputMessage = in.readUTF();
-            if (inputMessage.startsWith("/")) {
-                if (inputMessage.equals("/exit")) {
-                    break;
-                }
+        String fileName = loginField.getText() + ".txt";
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(fileName, true))) {
+            while (true) {
+                String message = in.readUTF();
+                if (message.startsWith("/")) {
+                    if (message.equals("/exit")) {
+                        break;
+                    }
 
-                if (inputMessage.startsWith("/clients_list ")) {
-                    Platform.runLater(() -> {
-                        String[] tokens = inputMessage.split("\\s+");
-                        clientsListView.getItems().clear();
-                        for (int i = 1; i < tokens.length; i++) {
-                            clientsListView.getItems().add(tokens[i]);
-                        }
-                    });
+                    if (message.startsWith("/changeok ")) {
+                        Platform.runLater(() -> {
+                            String[] tokens = message.split("\\s+");
+                            currentUser.setText("Ваше имя: " + tokens[1]);
+                        });
+                    }
+
+                    if (message.startsWith("/clients_list ")) {
+                        Platform.runLater(() -> {
+                            String[] tokens = message.split("\\s+");
+                            clientsListView.getItems().clear();
+                            for (int i = 1; i < tokens.length; i++) {
+                                clientsListView.getItems().add(tokens[i]);
+                            }
+                        });
+                    }
+                    continue;
                 }
-                continue;
+                chatArea.appendText(message + "\n");
+                writer.write(message);
+                writer.newLine();
+                writer.flush();
             }
-            chatArea.appendText(inputMessage + "\n");
         }
     }
 
-//  Отправка сообщений пользователя из текстового поля к серверу
+    //  Отправка сообщений пользователя из текстового поля к серверу
     public void sendMessage(ActionEvent actionEvent) {
         try {
             out.writeUTF(messageField.getText());
@@ -133,7 +171,7 @@ public class ClientController {
         }
     }
 
-//  Закрытие подключения сокета и потоков данных
+    //  Закрытие подключения сокета и потоков данных
     private void closeConnection() {
         try {
             if (in != null) {
@@ -158,7 +196,7 @@ public class ClientController {
         }
     }
 
-//  Отправки команды серверу о выходе из чата
+    //  Отправки команды серверу о выходе из чата
     public void exitApplication() {
         try {
             if (out != null) {
@@ -169,12 +207,12 @@ public class ClientController {
         }
     }
 
-//  Вызов диалогового окна с системными сообщениями об ошибках
+    //  Вызов диалогового окна с системными сообщениями об ошибках
     public void showError(String message) {
         new Alert(Alert.AlertType.ERROR, message, ButtonType.OK).showAndWait();
     }
 
-//  Обработка двойного клика по именам пользователей в ListView
+    //  Обработка двойного клика по именам пользователей в ListView
     public void clientsListDoubleClick(MouseEvent mouseEvent) {
         if (mouseEvent.getClickCount() == 2) {
             String selectedUser = clientsListView.getSelectionModel().getSelectedItem();
