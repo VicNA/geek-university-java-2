@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml"
+      fx:controller="ru.geekbrains.javalevel2.lesson6.ClientController"
+      prefHeight="400" prefWidth="400">
+
+
+    <TextArea fx:id="chatArea" VBox.vgrow="ALWAYS" editable="false"/>
+    <HBox>
+        <TextField fx:id="messageField" HBox.hgrow="ALWAYS" onAction="#sendMessage"/>
+        <Button text="Отправить" onAction="#sendMessage"/>
+    </HBox>
+    <HBox>
+<!--        Почему кнока не растягивается?-->
+        <Button text="Новое подключение" HBox.hgrow="ALWAYS" onAction="#createConnection"/>
+    </HBox>
+
+</VBox>
