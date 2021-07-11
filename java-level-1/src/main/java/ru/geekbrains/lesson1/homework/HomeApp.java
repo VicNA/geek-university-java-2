@@ -1,7 +1,7 @@
 package ru.geekbrains.lesson1.homework;
 
 public class HomeApp {
-    
+
     public static void main(String[] args) {
         printTreeWords();
         checkSumSign();
