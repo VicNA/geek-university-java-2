@@ -9,10 +9,12 @@ public class ClientHandler {
     private Server server;
     private Socket socket;
 
-    private String userName;
+    private String name;
     private DataInputStream in;
     private DataOutputStream out;
 
+//  Получение сокета от сервера, создание потоков in/out,
+//  запуск в отдельном потоке чтения данных получаемых от пользователя
     public ClientHandler(Server server, Socket socket) {
         try {
             this.server = server;
@@ -20,60 +22,110 @@ public class ClientHandler {
             this.in = new DataInputStream(socket.getInputStream());
             this.out = new DataOutputStream(socket.getOutputStream());
 
-            new Thread(() -> {
-                try {
-                    while (true) {
-                        String inputMessage = in.readUTF();
-                        if (inputMessage.startsWith("/auth ")) { // /auth bob
-                            userName = inputMessage.split("\\s+", 2)[1];
-                            if (server.nameAvailable(userName)) {
-                                server.subscribe(this);
-                                sendMessage("/authok");
-                                break;
-                            } else {
-                                sendMessage("/autnot");
-                            }
-                        } else {
-                            sendMessage("SERVER: Вам необходимо авторизоваться");
-                        }
-                    }
-                    while (true) {
-                        String inputMessage = in.readUTF();
-                        if (inputMessage.equals("/exit")) {
-                            out.writeUTF("/exit");
-                            break;
-                        }
-                        if (inputMessage.startsWith("/")) {
-                            continue;
-                        }
-                        server.broadcastMessage(userName + ": " + inputMessage);
-                    }
-                } catch (IOException e) {
-                    e.printStackTrace();
-                } finally {
-                    server.unsubscribe(this);
-                    try {
-                        in.close();
-                        out.close();
-                        socket.close();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-
-                }
-            }).start();
+            new Thread(() -> readMessages()).start();
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    public String getUserName() {
-        return userName;
+//  Обработка входящих данных получаемых от пользователя
+    private void readMessages() {
+        try {
+            while (!authentication(in.readUTF())) ;
+            while (readMessage(in.readUTF())) ;
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            System.out.println("Клиент " + name + " отключился");
+            server.unsubscribe(this);
+            closeConnection();
+
+        }
     }
 
+//  Обработка сообщений пользователя на наличие внутренних комманд
+//  и рассылка сообщения другим пользователям
+    private boolean readMessage(String inputMessage) {
+        if (inputMessage.startsWith("/")) {
+            if (inputMessage.equals("/exit")) {
+                sendMessage("/exit");
+                return false;
+            }
+            if (inputMessage.startsWith("/w ")) {
+                String[] tokens = inputMessage.split("\\s+", 3);
+                server.sendPersonalMessage(this, tokens[1], tokens[2]);
+            }
+            return true;
+        }
+        server.broadcastMessage(name + ": " + inputMessage);
+        return true;
+    }
+
+//  Обработка сообщения об авторизации
+    private boolean authentication(String message) throws IOException {
+        if (message.startsWith("/auth ")) {
+            String[] tokens = message.split("\\s+");
+
+            if (tokens.length == 1) {
+                sendMessage("SERVER: Вы не указали имя пользователя");
+                return false;
+            }
+
+            if (tokens.length > 2) {
+                sendMessage("SERVER: Имя пользователя не должен содержать пробелы");
+                return false;
+            }
+
+            String userName = tokens[1];
+            if (server.isNameBusy(userName)) {
+                sendMessage("SERVER: Данное имя пользователя уже занято");
+                return false;
+            }
+
+            name = userName;
+            sendMessage("/authok " + name);
+            server.subscribe(this);
+            return true;
+        } else {
+            sendMessage("SERVER: Вам необходимо авторизоваться");
+            return false;
+        }
+    }
+
+//  Полуение имя пользователя
+    public String getName() {
+        return name;
+    }
+
+//  Отправка сообщения пользователю
     public void sendMessage(String message) {
         try {
             out.writeUTF(message);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+//  Закрытие подключения сокета и потоков данных
+    private void closeConnection() {
+        try {
+            if (in != null) {
+                in.close();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        try {
+            if (out != null) {
+                out.close();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        try {
+            if (socket != null) {
+                socket.close();
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }
