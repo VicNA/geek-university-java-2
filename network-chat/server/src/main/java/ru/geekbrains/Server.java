@@ -11,19 +11,25 @@ public class Server {
 
     private LinkedList<ClientHandler> clients = new LinkedList<>();
 
+    private ConnectionService connection;
+
     public Server() {
 //  Создание сервера сокета
         try (ServerSocket serverSocket = new ServerSocket(PORT);) {
             System.out.println("Сервер запущен. Ожидаем подключение клиентов");
 
+            connection = new SqlliteUtil();
+
 //          Ожидание подключении пользователей и создание клиентского обработчика
             while (true) {
                 Socket socket = serverSocket.accept();
                 System.out.println("Подключился новый клиент");
-                new ClientHandler(this, socket);
+                new ClientHandler(this, socket, (AuthService) connection);
             }
         } catch (IOException e) {
             e.printStackTrace();
+        } finally {
+            connection.disconnect();
         }
     }
 
@@ -60,16 +66,6 @@ public class Server {
         broadcastMessage(sb.toString());
     }
 
-//  Проверка, занятно ли указанное имя пользователя
-    public synchronized boolean isNameBusy(String userName) {
-        for (ClientHandler client : clients) {
-            if (userName.equalsIgnoreCase(client.getName())) {
-                return true;
-            }
-        }
-        return false;
-    }
-
 //  Отправка личных сообщений
     public synchronized void sendPersonalMessage(ClientHandler sender, String receiverName, String message) {
         if (sender.getName().equalsIgnoreCase(receiverName)) {
@@ -86,5 +82,15 @@ public class Server {
         }
 
         sender.sendMessage("Пользователь " + receiverName + " не в сети");
+    }
+
+    //  Проверка, занятно ли указанное имя пользователя
+    public synchronized boolean isNameBusy(String userName) {
+        for (ClientHandler client : clients) {
+            if (userName.equalsIgnoreCase(client.getName())) {
+                return true;
+            }
+        }
+        return false;
     }
 }
