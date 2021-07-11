@@ -4,18 +4,18 @@
 <?import javafx.scene.layout.*?>
 
 <VBox xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml"
-      fx:controller="ru.geekbrains.javalevel2.lesson6.ClientController"
-      prefHeight="400" prefWidth="400">
+      fx:controller="ru.geekbrains.ClientController">
 
 
+    <HBox fx:id="authPanel">
+        <TextField fx:id="userNameField" promptText="Введите имя пользователя" HBox.hgrow="ALWAYS"
+                   onAction="#connect"/>
+        <Button text="Подключиться" onAction="#connect"/>
+    </HBox>
     <TextArea fx:id="chatArea" VBox.vgrow="ALWAYS" editable="false"/>
-    <HBox>
+    <HBox fx:id="msgPanel" visible="false" managed="false">
         <TextField fx:id="messageField" HBox.hgrow="ALWAYS" onAction="#sendMessage"/>
         <Button text="Отправить" onAction="#sendMessage"/>
-    </HBox>
-    <HBox>
-<!--        Почему кнока не растягивается?-->
-        <Button text="Новое подключение" HBox.hgrow="ALWAYS" onAction="#createConnection"/>
     </HBox>
 
 </VBox>

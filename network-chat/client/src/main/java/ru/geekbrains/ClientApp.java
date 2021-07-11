@@ -14,7 +14,7 @@ public class ClientApp extends Application {
         FXMLLoader loader = new FXMLLoader(getClass().getResource("/chat.fxml"));
         Parent root = loader.load();
         ClientController controller = loader.getController();
-        stage.setScene(new Scene(root));
+        stage.setScene(new Scene(root, 400,400));
         stage.setTitle("My Chat client");
         stage.setOnCloseRequest(event -> {
             controller.exitApplication();
