@@ -1,0 +1,14 @@
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+<VBox fx:controller="ru.geekbrains.lesson4.homework.Controller"
+      xmlns:fx="http://javafx.com/fxml" alignment="center">
+
+    <TextArea fx:id="chatText" editable="false" VBox.vgrow="ALWAYS"/>
+    <HBox>
+        <TextField fx:id="sendText" HBox.hgrow="ALWAYS" onAction="#send"/>
+        <Button text="Отправить" onAction="#send"/>
+    </HBox>
+</VBox>
