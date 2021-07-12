@@ -17,7 +17,7 @@
       <module name="client" target="11" />
       <module name="java-level-1" target="8" />
       <module name="java-level-2" target="11" />
-      <module name="java-level-3" target="8" />
+      <module name="java-level-3" target="11" />
       <module name="network-chat" target="11" />
       <module name="server" target="11" />
     </bytecodeTargetLevel>
