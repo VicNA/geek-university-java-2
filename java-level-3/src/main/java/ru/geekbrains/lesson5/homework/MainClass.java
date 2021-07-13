@@ -13,16 +13,15 @@ public class MainClass {
         System.out.println("ВАЖНОЕ ОБЪЯВЛЕНИЕ >>> Подготовка!!!");
 
         Semaphore semaphore = new Semaphore(CARS_COUNT / 2);
-        CountDownLatch latch = new CountDownLatch(CARS_COUNT);
+        CountDownLatch latch1 = new CountDownLatch(CARS_COUNT);
+        CountDownLatch latch2 = new CountDownLatch(CARS_COUNT);
         CyclicBarrier barrier = new CyclicBarrier(CARS_COUNT);
-//        Phaser phaser = new Phaser();
-
 
         Race race = new Race(new Road(60), new Tunnel(semaphore), new Road(40));
         Car[] cars = new Car[CARS_COUNT];
 
         for (int i = 0; i < cars.length; i++) {
-            cars[i] = new Car(race, 20 + (int) (Math.random() * 10), latch, barrier);
+            cars[i] = new Car(race, 20 + (int) (Math.random() * 10), latch1, barrier, latch2);
         }
 
         for (int i = 0; i < cars.length; i++) {
@@ -30,12 +29,17 @@ public class MainClass {
         }
 
         try {
-            latch.await();
+            latch1.await();
             System.out.println("ВАЖНОЕ ОБЪЯВЛЕНИЕ >>> Гонка началась!!!");
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-//        latch.getClass().
-        System.out.println("ВАЖНОЕ ОБЪЯВЛЕНИЕ >>> Гонка закончилась!!!");
+
+        try {
+            latch2.await();
+            System.out.println("ВАЖНОЕ ОБЪЯВЛЕНИЕ >>> Гонка закончилась!!!");
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 }

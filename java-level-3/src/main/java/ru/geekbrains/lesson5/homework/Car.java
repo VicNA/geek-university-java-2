@@ -12,17 +12,19 @@ public class Car implements Runnable {
     }
 
     private Race race;
-    private CountDownLatch latch;
+    private CountDownLatch latch1;
+    private CountDownLatch latch2;
     private CyclicBarrier barrier;
 
     private int speed;
     private String name;
     private static boolean winner;
 
-    public Car(Race race, int speed, CountDownLatch latch, CyclicBarrier barrier) {
+    public Car(Race race, int speed, CountDownLatch latch1, CyclicBarrier barrier, CountDownLatch latch2) {
         this.race = race;
         this.speed = speed;
-        this.latch = latch;
+        this.latch1 = latch1;
+        this.latch2 = latch2;
         this.barrier = barrier;
 
         CARS_COUNT++;
@@ -43,7 +45,7 @@ public class Car implements Runnable {
             System.out.println(this.name + " готовится");
             Thread.sleep(500 + (int) (Math.random() * 800));
             System.out.println(this.name + " готов");
-            latch.countDown();
+            latch1.countDown();
             barrier.await();
         } catch (Exception e) {
             e.printStackTrace();
@@ -55,5 +57,6 @@ public class Car implements Runnable {
             winner = true;
             System.out.println(this.name + " - WIN");
         }
+        latch2.countDown();
     }
 }
