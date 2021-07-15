@@ -20,7 +20,8 @@ public class Car implements Runnable {
 
     private int speed;
     private String name;
-    private static boolean winner;
+
+    private volatile static boolean winner;
 
     public Car(Race race, int speed, Phaser phaser) {
         this.race = race;
@@ -45,7 +46,6 @@ public class Car implements Runnable {
 
     @Override
     public void run() {
-//        phaser.register();
         try {
             System.out.println(this.name + " готовится");
             Thread.sleep(500 + (int) (Math.random() * 800));
