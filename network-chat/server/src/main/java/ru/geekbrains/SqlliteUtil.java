@@ -1,8 +1,13 @@
 package ru.geekbrains;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import java.sql.*;
 
 public class SqlliteUtil implements AuthService {
+
+    private static final Logger LOGGER = LogManager.getLogger(SqlliteUtil.class);
 
     private Connection connection;
     private Statement statement;
@@ -14,8 +19,10 @@ public class SqlliteUtil implements AuthService {
     @Override
     public void connect() {
         try {
-            connection = DriverManager.getConnection("jdbc:sqlite:demodb.db");
+            connection = DriverManager.getConnection("jdbc:sqlite:network-chat/demodb.db");
             statement = connection.createStatement();
+
+            LOGGER.info("Соединение с БД установлено.");
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -38,6 +45,8 @@ public class SqlliteUtil implements AuthService {
         } catch (SQLException e) {
             e.printStackTrace();
         }
+
+        LOGGER.info("Соединение с БД отключено.");
     }
 
     @Override

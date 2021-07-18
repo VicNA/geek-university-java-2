@@ -28,8 +28,7 @@ public class ClientHandler {
             this.in = new DataInputStream(socket.getInputStream());
             this.out = new DataOutputStream(socket.getOutputStream());
 
-            ExecutorService executor = Executors.newSingleThreadExecutor();
-            executor.execute(() -> readMessages());
+            server.getExecutor().execute(() -> readMessages());
         } catch (IOException e) {
             e.printStackTrace();
         }
