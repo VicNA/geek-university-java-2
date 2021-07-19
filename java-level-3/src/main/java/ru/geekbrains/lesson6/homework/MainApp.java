@@ -9,35 +9,28 @@ public class MainApp {
     private static final int checkOneNumber = 1;
     private static final int checkFourNumber = 4;
 
-    public int[] newArrayAfterNumber4(int[] arr) {
-        if (!Arrays.asList(arr).contains(checkFourNumber)) throw new RuntimeException();
+    public int[] newArrayAfterNumberFour(int[] arr) {
+        if (Arrays.stream(arr).noneMatch(n -> n == checkFourNumber)) throw new RuntimeException();
 
         int pos = arr.length - 1;
         for (int i = pos; i > -1; i--) {
             if (arr[i] == checkFourNumber) {
-                pos = arr[i];
+                pos = i;
                 break;
             }
         }
 
         int size = arr.length - 1 - pos;
         int[] newArr = new int[size];
-        System.arraycopy(arr, pos, newArr, 0, size);
+        System.arraycopy(arr, pos + 1, newArr, 0, size);
 
         return newArr;
     }
 
     public boolean checkTheArrayContainingOnlyOneAndFour(int[] arr) {
-        List list = Arrays.asList(arr);
-        if (list.contains(checkOneNumber) && list.contains(checkFourNumber)) {
-            for (int i = 0; i < 10; i++) {
-                if ((i != checkOneNumber || i != checkFourNumber) && list.contains(i)) {
-                    return false;
-                }
-            }
-            return true;
-        }
+        if (Arrays.stream(arr).allMatch(x -> x == checkOneNumber)) return false;
+        if (Arrays.stream(arr).allMatch(x -> x == checkFourNumber)) return false;
 
-        return false;
+        return Arrays.stream(arr).noneMatch(x -> x != checkOneNumber && x != checkFourNumber);
     }
 }
