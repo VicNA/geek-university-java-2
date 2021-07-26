@@ -1,0 +1,9 @@
+viktor: vcxfds
+viktor: eqwfds
+viktor: vcxfds2
+viktor: fdsew
+Пользователь ktor вошел в чат 
+ktor: Hello
+viktor: Hi
+ktor: bye
+Пользователь ktor вышел из чата
