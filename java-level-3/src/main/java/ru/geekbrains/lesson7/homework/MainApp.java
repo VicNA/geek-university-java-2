@@ -31,21 +31,31 @@ public class MainApp {
     }
 
     private static void start(Class testClass) {
-        Supplier<Stream<Method>> streamSupplier = () -> Arrays.stream(testClass.getDeclaredMethods());
+        Method[] methods = testClass.getDeclaredMethods();
 
-        if (streamSupplier.get().filter(m -> m.getAnnotation(BeforeSuite.class) != null).count() > 1 ||
-                streamSupplier.get().filter(m -> m.getAnnotation(AfterSuite.class) != null).count() > 1) {
-            throw new RuntimeException();
+        Method beforeSuite = null;
+        Method afterSuite = null;
+
+        for (Method m : methods) {
+            if (m.getAnnotation(BeforeSuite.class) != null) {
+                if (beforeSuite != null) throw new RuntimeException();
+                beforeSuite = m;
+            }
+            if (m.getAnnotation(AfterSuite.class) != null) {
+                if (afterSuite != null) throw new RuntimeException();
+                afterSuite = m;
+            }
         }
 
-        try {
-            streamSupplier.get().filter(m -> m.getAnnotation(BeforeSuite.class) != null)
-                    .findFirst().get().invoke(objTestClass, null);
-        } catch (IllegalAccessException | InvocationTargetException e) {
-            e.printStackTrace();
+        if (beforeSuite != null) {
+            try {
+                beforeSuite.invoke(objTestClass, null);
+            } catch (IllegalAccessException | InvocationTargetException e) {
+                e.printStackTrace();
+            }
         }
 
-        streamSupplier.get().filter(m -> m.getAnnotation(Test.class) != null)
+        Arrays.stream(methods).filter(m -> m.getAnnotation(Test.class) != null)
                 .sorted(Comparator.comparingInt(m -> m.getAnnotation(Test.class).value()))
                 .forEach(m -> {
             try {
@@ -55,11 +65,14 @@ public class MainApp {
             }
         });
 
-        try {
-            streamSupplier.get().filter(m -> m.getAnnotation(AfterSuite.class) != null)
-                    .findFirst().get().invoke(objTestClass,null);
-        } catch (IllegalAccessException | InvocationTargetException e) {
-            e.printStackTrace();
+        if (afterSuite != null) {
+            try {
+                afterSuite.invoke(objTestClass, null);
+            } catch (IllegalAccessException e) {
+                e.printStackTrace();
+            } catch (InvocationTargetException e) {
+                e.printStackTrace();
+            }
         }
     }
 }
