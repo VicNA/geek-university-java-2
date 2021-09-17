@@ -1,4 +1,4 @@
-package lesson4;
+package ru.geekbrains.lesson4;
 
 public class MyOneLinkedList<T> {
     private class Node {

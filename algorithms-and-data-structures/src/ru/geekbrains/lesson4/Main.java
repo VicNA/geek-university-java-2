@@ -1,4 +1,4 @@
-package lesson4;
+package ru.geekbrains.lesson4;
 
 import java.util.List;
 

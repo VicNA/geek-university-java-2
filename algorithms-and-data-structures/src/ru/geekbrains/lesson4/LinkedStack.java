@@ -1,4 +1,4 @@
-package lesson4;
+package ru.geekbrains.lesson4;
 
 public class LinkedStack<T> {
     private MyLinkedList<T> list;
