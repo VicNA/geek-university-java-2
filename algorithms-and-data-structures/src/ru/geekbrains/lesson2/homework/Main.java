@@ -28,6 +28,10 @@ public class Main {
         Instant end = Instant.now();
         System.out.println("selectionSort: " + Duration.between(start, end).toSeconds() + " секунд");
 
+
+        System.out.println("arr1 = " + arr1.toString(10) + "\n");
+
+
         System.out.println("arr2 = " + arr2.toString(10));
 
         start = Instant.now();
@@ -35,11 +39,16 @@ public class Main {
         end = Instant.now();
         System.out.println("insertionSort: " + Duration.between(start, end).toSeconds() + " секунд");
 
+        System.out.println("arr2 = " + arr2.toString(10) + "\n");
+
+
         System.out.println("arr3 = " + arr3.toString(10));
 
         start = Instant.now();
         arr3.bubbleSort();
         end = Instant.now();
         System.out.println("bubbleSort: " + Duration.between(start, end).toSeconds() + " секунд");
+
+        System.out.println("arr3 = " + arr3.toString(10));
     }
 }
